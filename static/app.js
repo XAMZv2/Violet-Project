@@ -419,9 +419,22 @@
       const response = await fetch(`/api/stream/${encodeURIComponent(song.videoId)}`);
       const body = await response.json();
       if (!response.ok || !body.url) throw new Error(body.error || "Stream tidak tersedia.");
-      audio.src = body.url;
-      audio.load();
-      await audio.play();
+      audio.pause();
+audio.removeAttribute("src");
+audio.load();
+
+audio.src = body.url;
+audio.load();
+
+await new Promise((resolve, reject) => {
+  audio.addEventListener("canplay", resolve, { once: true });
+  audio.addEventListener("error", () => {
+    reject(new Error("Browser tidak bisa memuat stream audio."));
+  }, { once: true });
+  setTimeout(() => reject(new Error("Audio terlalu lama dimuat.")), 15000);
+});
+
+await audio.play();
       $("#play-current").textContent = "Ⅱ";
       $("#player-status").textContent = "Memutar di Violet.";
     } catch (error) {
